@@ -39,6 +39,7 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
   const [summarizing, setSummarizing] = useState(false);
+  const [viewingSummary, setViewingSummary] = useState(false);
   const [deletingCache, setDeletingCache] = useState(false);
   const [confirmingCacheDelete, setConfirmingCacheDelete] = useState(false);
   const [checkingCache, setCheckingCache] = useState(false);
@@ -330,72 +331,74 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
   return (
     <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end">
       {open ? (
-        <section className="relative mb-3 flex h-[min(42rem,calc(100vh-7rem))] w-[min(30rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-md border border-zinc-200 bg-white shadow-xl">
+        <section className="relative mb-3 flex h-[min(42rem,calc(100vh-7rem))] w-[min(30rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-xl border border-surface-dark-elevated bg-surface-dark shadow-2xl shadow-ink/20">
           {loading || summarizing || deletingCache ? (
-            <div className="absolute left-0 top-0 h-1 w-full overflow-hidden bg-rose-100">
-              <div className="h-full w-1/2 animate-[summary-progress_1.2s_ease-in-out_infinite] bg-rose-700" />
+            <div className="absolute left-0 top-0 h-0.5 w-full overflow-hidden bg-primary/20">
+              <div className="h-full w-1/2 animate-[summary-progress_1.2s_ease-in-out_infinite] bg-primary" />
             </div>
           ) : null}
-          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-200 p-4">
+
+          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-surface-dark-elevated p-4">
             <div>
-              <h2 className="text-base font-semibold">Local AI summary</h2>
-              <p className="mt-1 text-sm leading-5 text-zinc-600">
-                Runs in your browser with WebLLM. First model load downloads
-                files once.
+              <h2 className="font-serif text-lg font-normal tracking-[-0.02em] text-on-dark">
+                Local AI summary
+              </h2>
+              <p className="mt-1 font-sans text-xs leading-5 text-on-dark-soft">
+                Runs in your browser with WebLLM. First load downloads once.
               </p>
             </div>
             <button
               aria-label="Close local AI summary"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-lg leading-none text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-sans text-on-dark-soft transition hover:bg-surface-dark-elevated hover:text-on-dark"
               onClick={() => setPanelOpen(false)}
               type="button"
             >
-              x
+              ×
             </button>
           </div>
 
-          <div className="flex shrink-0 flex-col gap-3 border-b border-zinc-200 p-4">
+          <div className="flex shrink-0 flex-col gap-3 border-b border-surface-dark-elevated p-4">
             <input
-              className="rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none ring-rose-700/20 focus:border-rose-700 focus:ring-4"
+              className="rounded-md border border-surface-dark-elevated bg-surface-dark-soft px-3 py-2 font-sans text-sm text-on-dark outline-none placeholder:text-on-dark-soft transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search MLC models"
+              placeholder="Search MLC models…"
               value={query}
             />
-            <div className="flex items-center justify-between gap-3 text-xs text-zinc-500">
+            <div className="flex items-center justify-between gap-3 font-sans text-xs text-on-dark-soft">
               <span>
                 {cachedIds.size} cached model{cachedIds.size === 1 ? "" : "s"}
               </span>
               <button
-                className="font-medium text-zinc-700 hover:text-zinc-950 disabled:opacity-50"
+                className="font-medium text-on-dark-soft transition hover:text-on-dark disabled:opacity-40"
                 disabled={checkingCache || !cachedWebLLM}
                 onClick={() => void refreshCachedModels()}
                 type="button"
               >
-                {checkingCache ? "Checking..." : "Refresh cache"}
+                {checkingCache ? "Checking…" : "Refresh cache"}
               </button>
             </div>
 
-            <div className="h-40 rounded-md border border-zinc-200 bg-white p-2">
+            <div className="h-40 rounded-lg border border-surface-dark-elevated bg-surface-dark-soft p-2">
               <div className="h-full space-y-2 overflow-y-auto pr-1">
                 {filteredModels.length > 0 ? (
                   filteredModels.map((model) => {
                     const selected = model.id === selectedModelId;
                     return (
                       <button
-                        className={`w-full rounded-md border px-3 py-2 text-left text-sm transition ${
+                        className={`w-full rounded-md border px-3 py-2 text-left font-sans text-sm transition ${
                           selected
-                            ? "border-zinc-950 bg-zinc-950 text-white"
-                            : "border-zinc-200 bg-stone-50 text-zinc-800 hover:border-zinc-300 hover:bg-zinc-100"
+                            ? "border-primary/40 bg-primary/10 text-on-dark"
+                            : "border-surface-dark-elevated bg-surface-dark-elevated text-on-dark-soft hover:border-surface-dark-soft hover:text-on-dark"
                         }`}
                         key={`${model.source}-${model.id}`}
                         onClick={() => setSelectedModelId(model.id)}
                         type="button"
                       >
                         <span className="block font-medium">{model.label}</span>
-                        <span className="mt-1 flex flex-wrap items-center gap-2 text-xs opacity-75">
+                        <span className="mt-1 flex flex-wrap items-center gap-2 text-xs opacity-60">
                           <span className="break-all">{model.id}</span>
                           {cachedIds.has(model.id) ? (
-                            <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800">
+                            <span className="rounded-full bg-accent-teal/20 px-2 py-0.5 text-accent-teal">
                               cached
                             </span>
                           ) : null}
@@ -404,7 +407,7 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
                     );
                   })
                 ) : (
-                  <p className="px-2 py-3 text-sm text-zinc-600">
+                  <p className="px-2 py-3 font-sans text-sm text-on-dark-soft">
                     No models match your search.
                   </p>
                 )}
@@ -413,40 +416,40 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
 
             <div className="grid gap-2 sm:grid-cols-3">
               <button
-                className="rounded-md bg-zinc-950 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md bg-primary px-3 py-2 font-sans text-sm font-medium text-on-primary transition hover:bg-primary-active disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={loading || !selectedModelId || deletingCache}
                 onClick={() => void loadModel()}
                 type="button"
               >
-                {loading ? "Loading..." : "Load model"}
+                {loading ? "Loading…" : "Load model"}
               </button>
               <button
-                className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md border border-surface-dark-elevated bg-surface-dark-elevated px-3 py-2 font-sans text-sm font-medium text-on-dark transition hover:bg-surface-dark-soft disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={summarizing || !engine || !post || deletingCache}
                 onClick={() => void summarize()}
                 type="button"
               >
-                {summarizing ? "Summarizing..." : "Summarize post"}
+                {summarizing ? "Summarizing…" : "Summarize"}
               </button>
               <button
-                className="rounded-md border border-red-200 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md border border-error-text/20 px-3 py-2 font-sans text-sm font-medium text-error-text transition hover:bg-error-surface disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={loading || summarizing || deletingCache}
                 onClick={() => setConfirmingCacheDelete(true)}
                 type="button"
               >
-                {deletingCache ? "Deleting..." : "Delete all cache"}
+                {deletingCache ? "Deleting…" : "Clear cache"}
               </button>
             </div>
-            <div className="flex flex-wrap gap-3 text-xs">
+            <div className="flex flex-wrap gap-3 font-sans text-xs">
               <button
-                className="font-medium text-zinc-700 hover:text-zinc-950"
+                className="text-on-dark-soft transition hover:text-on-dark"
                 onClick={() => void checkWebGpu()}
                 type="button"
               >
                 Check WebGPU
               </button>
               <button
-                className="font-medium text-zinc-700 hover:text-zinc-950"
+                className="text-on-dark-soft transition hover:text-on-dark"
                 onClick={resetRuntime}
                 type="button"
               >
@@ -456,29 +459,29 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
           </div>
 
           {confirmingCacheDelete ? (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 p-4 backdrop-blur-sm">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface-dark/80 p-4 backdrop-blur-sm">
               <section
                 aria-modal="true"
-                className="w-full max-w-sm rounded-md border border-zinc-200 bg-white p-4 shadow-xl"
+                className="w-full max-w-sm rounded-xl border border-surface-dark-elevated bg-surface-dark-elevated p-5 shadow-2xl"
                 role="dialog"
               >
-                <h3 className="text-base font-semibold text-zinc-950">
+                <h3 className="font-serif text-lg font-normal text-on-dark">
                   Delete all cached models?
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-zinc-600">
+                <p className="mt-2 font-sans text-sm leading-6 text-on-dark-soft">
                   This removes downloaded WebLLM model files from this browser.
                   You will need to download a model again before summarizing.
                 </p>
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
                   <button
-                    className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
+                    className="rounded-md border border-surface-dark-soft px-3 py-2 font-sans text-sm font-medium text-on-dark transition hover:bg-surface-dark-soft"
                     onClick={() => setConfirmingCacheDelete(false)}
                     type="button"
                   >
                     Cancel
                   </button>
                   <button
-                    className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-700"
+                    className="rounded-md bg-error-text px-3 py-2 font-sans text-sm font-medium text-white transition hover:opacity-90"
                     onClick={() => void deleteAllModelCaches()}
                     type="button"
                   >
@@ -490,32 +493,82 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
           ) : null}
 
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            <p className="text-sm leading-5 text-zinc-600">{status}</p>
+            {!summary ? (
+              <p className="font-sans text-sm leading-5 text-on-dark-soft">{status}</p>
+            ) : null}
 
             {diagnostic ? (
-              <p className="mt-3 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700">
+              <p className="mt-3 rounded-lg border border-surface-dark-elevated bg-surface-dark-elevated px-3 py-2 font-sans text-xs text-on-dark-soft">
                 {diagnostic}
               </p>
             ) : null}
 
             {error ? (
-              <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+              <p className="mt-3 rounded-lg border border-error-text/20 bg-error-surface px-3 py-2 font-sans text-sm text-error-text">
                 {error}
               </p>
             ) : null}
 
             {summary ? (
-              <article className="mt-3 rounded-md border border-zinc-200 bg-stone-50 p-3">
-                <SummaryContent text={summary} />
-              </article>
+              <div>
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <p className="min-w-0 font-sans text-xs leading-5 text-on-dark-soft">
+                    {status}
+                  </p>
+                  <button
+                    className="shrink-0 rounded-md border border-surface-dark-elevated px-3 py-1.5 font-sans text-xs font-medium text-on-dark transition hover:bg-surface-dark-elevated"
+                    onClick={() => setViewingSummary(true)}
+                    type="button"
+                  >
+                    Expand ↗
+                  </button>
+                </div>
+                <article className="rounded-lg border border-hairline bg-canvas p-4">
+                  <SummaryContent text={summary} />
+                </article>
+              </div>
             ) : null}
           </div>
         </section>
       ) : null}
 
+      {viewingSummary ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
+          <section
+            aria-modal="true"
+            className="flex h-[min(48rem,calc(100vh-2rem))] w-[min(56rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border border-hairline bg-canvas shadow-2xl"
+            role="dialog"
+          >
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-hairline p-6">
+              <div>
+                <h2 className="font-serif text-2xl font-normal tracking-[-0.02em] text-ink">
+                  Local AI summary
+                </h2>
+                <p className="mt-1 font-sans text-sm text-muted">
+                  Generated with {loadedModelId || "WebLLM"}
+                </p>
+              </div>
+              <button
+                aria-label="Close expanded summary"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted transition hover:bg-surface-card hover:text-ink"
+                onClick={() => setViewingSummary(false)}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-6">
+              <article className="rounded-lg border border-hairline bg-surface-card p-5">
+                <SummaryContent text={summary} />
+              </article>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
       <button
         aria-label="Open local AI summarizer"
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-700 text-sm font-semibold text-white shadow-lg transition hover:bg-rose-800"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary font-serif text-base font-normal italic text-on-primary shadow-lg shadow-primary/25 transition hover:bg-primary-active"
         onClick={() => void handleOpen()}
         type="button"
       >

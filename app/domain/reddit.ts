@@ -14,6 +14,7 @@ export type HotPost = {
   url: string | null;
   selftext: string;
   over_18: boolean;
+  image_url: string | null;
 };
 
 export type Comment = {
@@ -25,6 +26,7 @@ export type Comment = {
   permalink: string | null;
   depth: number;
   reply_count: number;
+  replies: Comment[];
 };
 
 export type HotPostsResponse = {

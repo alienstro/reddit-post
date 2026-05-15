@@ -47,6 +47,7 @@ export function toSummaryPost(post: HotPost): SummaryPost {
     num_comments: post.num_comments,
     url: post.url,
     selftext: post.selftext,
+    image_url: post.image_url,
   };
 }
 
@@ -55,5 +56,6 @@ export function toSummaryComments(comments: Comment[]): SummaryComment[] {
     author: comment.author,
     body: comment.body,
     score: comment.score,
+    replies: toSummaryComments(comment.replies ?? []),
   }));
 }

@@ -117,27 +117,27 @@ export function CommunityPins({
   );
 
   return (
-    <section className="flex w-full flex-col gap-3 rounded-md border border-zinc-200 bg-white p-4">
+    <section className="flex w-full flex-col gap-3 rounded-lg border border-hairline bg-surface-card p-4">
       {auth.authenticated ? (
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-sm text-zinc-700">
-              Logged in as <strong>{auth.user?.username}</strong>
+            <span className="font-sans text-sm text-body">
+              Signed in as <strong className="font-medium text-ink">{auth.user?.username}</strong>
             </span>
             <div className="flex gap-2">
               <button
-                className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
+                className="rounded-md border border-hairline bg-canvas px-3 py-2 font-sans text-sm font-medium text-ink transition hover:bg-surface-soft"
                 onClick={handlePin}
                 type="button"
               >
                 {currentPinned ? "Update pin" : `Pin r/${subreddit}`}
               </button>
               <button
-                className="rounded-md bg-zinc-950 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-800"
+                className="rounded-md bg-ink px-3 py-2 font-sans text-sm font-medium text-on-dark transition hover:bg-body-strong"
                 onClick={handleLogout}
                 type="button"
               >
-                Log out
+                Sign out
               </button>
             </div>
           </div>
@@ -145,11 +145,11 @@ export function CommunityPins({
             <div className="flex flex-wrap gap-2">
               {pins.map((pin) => (
                 <span
-                  className="inline-flex items-center overflow-hidden rounded-md border border-zinc-300 bg-stone-50 text-sm"
+                  className="inline-flex items-center overflow-hidden rounded-full border border-hairline bg-canvas font-sans text-sm"
                   key={pin.id}
                 >
                   <button
-                    className="px-3 py-1.5 font-medium text-zinc-800 hover:text-rose-700"
+                    className="px-3 py-1.5 font-medium text-body transition hover:text-primary"
                     disabled={isPending}
                     onClick={() => loadPin(pin.subreddit)}
                     type="button"
@@ -158,11 +158,11 @@ export function CommunityPins({
                   </button>
                   <button
                     aria-label={`Remove r/${pin.subreddit}`}
-                    className="border-l border-zinc-300 px-2 py-1.5 text-zinc-500 hover:bg-red-50 hover:text-red-700"
+                    className="border-l border-hairline px-2 py-1.5 text-muted-soft transition hover:bg-error-surface hover:text-error-text"
                     onClick={() => void handleDelete(pin.id)}
                     type="button"
                   >
-                    x
+                    ×
                   </button>
                 </span>
               ))}
@@ -173,32 +173,32 @@ export function CommunityPins({
         <form className="flex flex-col gap-3" onSubmit={handleLogin}>
           <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
             <input
-              className="min-w-0 rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none ring-rose-700/20 focus:border-rose-700 focus:ring-4"
+              className="min-w-0 rounded-md border border-hairline bg-canvas px-3 py-2 font-sans text-sm text-ink outline-none placeholder:text-muted-soft transition focus:border-primary focus:ring-4 focus:ring-primary/15"
               onChange={(event) => setUsername(event.target.value)}
               placeholder="Username"
               value={username}
             />
             <input
-              className="min-w-0 rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none ring-rose-700/20 focus:border-rose-700 focus:ring-4"
+              className="min-w-0 rounded-md border border-hairline bg-canvas px-3 py-2 font-sans text-sm text-ink outline-none placeholder:text-muted-soft transition focus:border-primary focus:ring-4 focus:ring-primary/15"
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Password"
               type="password"
               value={password}
             />
             <button
-              className="rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800"
+              className="rounded-md bg-ink px-4 py-2 font-sans text-sm font-medium text-on-dark transition hover:bg-body-strong"
               type="submit"
             >
-              Log in
+              Sign in
             </button>
           </div>
-          <p className="text-sm text-zinc-600">
-            Log in with a Django user account to manage saved communities.
+          <p className="font-sans text-xs text-muted">
+            Sign in with a Django account to save communities.
           </p>
         </form>
       )}
       {error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+        <p className="rounded-md border border-error-border bg-error-surface px-3 py-2 font-sans text-sm text-error-text">
           {error}
         </p>
       ) : null}

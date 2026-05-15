@@ -5,12 +5,14 @@ export type SummaryPost = {
   num_comments: number;
   url: string | null;
   selftext: string;
+  image_url: string | null;
 };
 
 export type SummaryComment = {
   author: string | null;
   body: string;
   score: number;
+  replies: SummaryComment[];
 };
 
 export type SummarizerProps = {

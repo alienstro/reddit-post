@@ -14,8 +14,8 @@ export async function RedditReaderPage({
   const data = await getRedditPageData(searchParams);
 
   return (
-    <main className="min-h-screen bg-stone-50 text-zinc-950">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-6 sm:px-8 lg:px-10">
+    <main className="min-h-screen bg-canvas text-ink">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 py-8 sm:px-8 lg:px-10">
         <RedditHeader subreddit={data.subreddit} />
 
         <CommunityPins
@@ -25,12 +25,12 @@ export async function RedditReaderPage({
         />
 
         {data.hotError ? (
-          <section className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+          <section className="rounded-lg border border-error-border bg-error-surface px-4 py-3 text-sm text-error-text">
             {data.hotError}
           </section>
         ) : null}
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <section className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <HotPostList
             posts={data.posts}
             selectedPost={data.selectedPost}

@@ -2,10 +2,11 @@ import type { SummaryComment, SummaryPost } from "@/app/domain/summary";
 import type { ModelOption } from "@/app/domain/webllm";
 
 export function buildPrompt(post: SummaryPost, comments: SummaryComment[]) {
-  const topComments = comments
-    .slice(0, 20)
+  const topComments = flattenSummaryComments(comments.slice(0, 20))
+    .slice(0, 60)
     .map((comment, index) => {
-      return `${index + 1}. u/${comment.author ?? "unknown"} (${comment.score} points): ${comment.body}`;
+      const indent = "  ".repeat(comment.depth);
+      return `${indent}${index + 1}. u/${comment.author ?? "unknown"} (${comment.score} points): ${comment.body}`;
     })
     .join("\n\n");
 
@@ -18,6 +19,7 @@ export function buildPrompt(post: SummaryPost, comments: SummaryComment[]) {
     `Score: ${post.score}`,
     `Comment count: ${post.num_comments}`,
     post.url ? `URL: ${post.url}` : "",
+    post.image_url ? `Image: ${post.image_url}` : "",
     "",
     "Post body:",
     post.selftext || "(No self text; use title and comments.)",
@@ -27,6 +29,16 @@ export function buildPrompt(post: SummaryPost, comments: SummaryComment[]) {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function flattenSummaryComments(
+  comments: SummaryComment[],
+  depth = 0,
+): Array<SummaryComment & { depth: number }> {
+  return comments.flatMap((comment) => [
+    { ...comment, depth },
+    ...flattenSummaryComments(comment.replies, depth + 1),
+  ]);
 }
 
 export function modelLabel(modelId: string) {
