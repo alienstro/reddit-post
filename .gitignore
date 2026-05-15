@@ -33,6 +33,17 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# local database files
+db.sqlite3
+*.sqlite3
+*.sqlite3-journal
+
+# python/backend artifacts if commands are run from this folder
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
 # vercel
 .vercel
 
