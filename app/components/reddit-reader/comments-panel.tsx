@@ -164,10 +164,19 @@ function InlineMarkdown({ text }: { text: string }) {
   return parts.map((part, index) => {
     const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
     if (link) {
+      const href = safeHttpUrl(decodeHtml(link[2]));
+      if (!href) {
+        return (
+          <span className="[overflow-wrap:anywhere]" key={index}>
+            {decodeHtml(link[1])}
+          </span>
+        );
+      }
+
       return (
         <a
           className="break-all font-medium text-accent-teal hover:text-on-dark"
-          href={link[2]}
+          href={href}
           key={index}
           rel="noreferrer"
           target="_blank"
@@ -178,10 +187,19 @@ function InlineMarkdown({ text }: { text: string }) {
     }
 
     if (/^https?:\/\/\S+$/.test(part)) {
+      const href = safeHttpUrl(decodeHtml(part));
+      if (!href) {
+        return (
+          <span className="[overflow-wrap:anywhere]" key={index}>
+            {decodeHtml(part)}
+          </span>
+        );
+      }
+
       return (
         <a
           className="break-all font-medium text-accent-teal hover:text-on-dark"
-          href={decodeHtml(part)}
+          href={href}
           key={index}
           rel="noreferrer"
           target="_blank"
@@ -214,6 +232,15 @@ function decodeHtml(text: string) {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, "&");
+}
+
+function safeHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 function CommentCard({ comment }: { comment: Comment }) {

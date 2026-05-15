@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState, useTransition } from "react";
+import { FormEvent, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import type { AuthState, Pin, PinsResponse } from "@/app/domain/auth";
@@ -45,9 +45,18 @@ export function CommunityPins({
     }
   }
 
+  async function ensureCsrfCookie() {
+    await fetch("/api/auth/me/", { cache: "no-store" });
+  }
+
+  useEffect(() => {
+    void ensureCsrfCookie();
+  }, []);
+
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    await ensureCsrfCookie();
 
     const response = await fetch("/api/auth/login/", {
       method: "POST",
@@ -69,6 +78,7 @@ export function CommunityPins({
 
   async function handleLogout() {
     setError("");
+    await ensureCsrfCookie();
     await fetch("/api/auth/logout/", { method: "POST" });
     setAuth(anonymousState);
     setPins([]);
@@ -76,6 +86,7 @@ export function CommunityPins({
 
   async function handlePin() {
     setError("");
+    await ensureCsrfCookie();
     const response = await fetch("/api/reddit/pins/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -93,6 +104,7 @@ export function CommunityPins({
 
   async function handleDelete(pinId: number) {
     setError("");
+    await ensureCsrfCookie();
     const response = await fetch(`/api/reddit/pins/${pinId}/`, {
       method: "DELETE",
     });

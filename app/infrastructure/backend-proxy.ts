@@ -8,8 +8,22 @@ type ProxyOptions = {
   body?: unknown;
 };
 
+function getSetCookies(headers: Headers) {
+  const withGetSetCookie = headers as Headers & {
+    getSetCookie?: () => string[];
+  };
+  const setCookies = withGetSetCookie.getSetCookie?.();
+  if (setCookies?.length) {
+    return setCookies;
+  }
+
+  const setCookie = headers.get("Set-Cookie");
+  return setCookie ? [setCookie] : [];
+}
+
 export async function proxyToDjango(path: string, options: ProxyOptions = {}) {
   const cookieStore = await cookies();
+  const csrfToken = cookieStore.get("csrftoken")?.value;
   const cookieHeader = cookieStore
     .getAll()
     .map((cookie) => `${cookie.name}=${cookie.value}`)
@@ -20,6 +34,7 @@ export async function proxyToDjango(path: string, options: ProxyOptions = {}) {
     headers: {
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
     cache: "no-store",
@@ -33,9 +48,8 @@ export async function proxyToDjango(path: string, options: ProxyOptions = {}) {
     },
   });
 
-  const setCookie = response.headers.get("Set-Cookie");
-  if (setCookie) {
-    nextResponse.headers.set("Set-Cookie", setCookie);
+  for (const setCookie of getSetCookies(response.headers)) {
+    nextResponse.headers.append("Set-Cookie", setCookie);
   }
 
   return nextResponse;
