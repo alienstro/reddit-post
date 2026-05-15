@@ -23,6 +23,7 @@ import type {
 let cachedWebLLM: WebLLMModule | null = null;
 let cachedEngine: MLCEngine | null = null;
 let cachedLoadedModelId = "";
+let cachedLoadedContextWindowSize = 0;
 let cachedModels: ModelOption[] = [];
 let cachedAllModelIds: string[] = [];
 let cachedPanelOpen = false;
@@ -35,6 +36,13 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
   const [engine, setEngine] = useState<MLCEngine | null>(cachedEngine);
   const [selectedModelId, setSelectedModelId] = useState(cachedLoadedModelId);
   const [loadedModelId, setLoadedModelId] = useState(cachedLoadedModelId);
+  const [loadedContextWindowSize, setLoadedContextWindowSize] = useState(
+    cachedLoadedContextWindowSize,
+  );
+  const [contextWindowSize, setContextWindowSize] = useState(4096);
+  const [maxTokens, setMaxTokens] = useState(700);
+  const [temperature, setTemperature] = useState(0.2);
+  const [commentLimit, setCommentLimit] = useState(10);
   const [status, setStatus] = useState("Choose a model to summarize locally.");
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
@@ -180,14 +188,19 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
         initProgressCallback: (report) => {
           setStatus(report.text || `Loading ${selectedModelId}...`);
         },
+      }, {
+        context_window_size: contextWindowSize,
+        sliding_window_size: -1,
       });
       cachedEngine = nextEngine;
       cachedLoadedModelId = selectedModelId;
+      cachedLoadedContextWindowSize = contextWindowSize;
       cachedModelIds = new Set(cachedModelIds).add(selectedModelId);
       setEngine(cachedEngine);
       setLoadedModelId(cachedLoadedModelId);
+      setLoadedContextWindowSize(cachedLoadedContextWindowSize);
       setCachedIds(new Set(cachedModelIds));
-      setStatus(`Loaded ${selectedModelId}.`);
+      setStatus(`Loaded ${selectedModelId} with ${contextWindowSize} context.`);
     } catch (caught) {
       const message =
         caught instanceof Error ? caught.message : "Model loading failed.";
@@ -248,6 +261,10 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
       setError("Load a model first.");
       return;
     }
+    if (loadedContextWindowSize !== contextWindowSize) {
+      setError("Context size changed. Load the model again before summarizing.");
+      return;
+    }
 
     setError("");
     setSummary("");
@@ -262,10 +279,18 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
             content:
               "You are an accurate Reddit discussion summarizer. Summarize only the information, opinions, claims, and examples that are explicitly present in the provided Reddit posts and comments. Do not invent facts, infer unsupported conclusions, or add outside context unless the user specifically asks for it. Clearly distinguish between common themes, minority viewpoints, disagreements, and individual anecdotes. Preserve uncertainty, avoid overstating consensus, and mention when the input does not provide enough evidence to support a conclusion.",
           },
-          { role: "user", content: buildPrompt(post, comments) },
+          {
+            role: "user",
+            content: buildPrompt(post, comments, {
+              commentLimit,
+              flattenedCommentLimit: commentLimit * 3,
+              postBodyCharLimit: Math.max(800, contextWindowSize - maxTokens - 1200),
+              commentCharLimit: 500,
+            }),
+          },
         ],
-        temperature: 0.2,
-        max_tokens: 1000,
+        temperature,
+        max_tokens: maxTokens,
       });
 
       setSummary(
@@ -304,9 +329,11 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
 
       cachedEngine = null;
       cachedLoadedModelId = "";
+      cachedLoadedContextWindowSize = 0;
       cachedModelIds = new Set();
       setEngine(null);
       setLoadedModelId("");
+      setLoadedContextWindowSize(0);
       setCachedIds(new Set());
       setSummary("");
 
@@ -357,7 +384,8 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
             </button>
           </div>
 
-          <div className="flex shrink-0 flex-col gap-3 border-b border-surface-dark-elevated p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            <div className="flex flex-col gap-3 border-b border-surface-dark-elevated pb-4">
             <input
               className="rounded-md border border-surface-dark-elevated bg-surface-dark-soft px-3 py-2 font-sans text-sm text-on-dark outline-none placeholder:text-on-dark-soft transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               onChange={(event) => setQuery(event.target.value)}
@@ -440,6 +468,76 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
                 {deletingCache ? "Deleting…" : "Clear cache"}
               </button>
             </div>
+            <details className="rounded-lg border border-surface-dark-elevated bg-surface-dark-soft p-3">
+              <summary className="list-none font-sans text-xs font-medium text-on-dark-soft transition hover:text-on-dark">
+                Generation settings
+              </summary>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="space-y-1 font-sans text-xs text-on-dark-soft">
+                  <span>Context size</span>
+                  <select
+                    className="w-full rounded-md border border-surface-dark-elevated bg-surface-dark px-2 py-1.5 text-on-dark outline-none"
+                    disabled={loading || summarizing}
+                    onChange={(event) =>
+                      setContextWindowSize(Number(event.target.value))
+                    }
+                    value={contextWindowSize}
+                  >
+                    <option value={2048}>2048</option>
+                    <option value={4096}>4096</option>
+                    <option value={8192}>8192</option>
+                  </select>
+                </label>
+                <label className="space-y-1 font-sans text-xs text-on-dark-soft">
+                  <span>Max output tokens</span>
+                  <input
+                    className="w-full rounded-md border border-surface-dark-elevated bg-surface-dark px-2 py-1.5 text-on-dark outline-none"
+                    disabled={summarizing}
+                    max={2000}
+                    min={128}
+                    onChange={(event) => setMaxTokens(Number(event.target.value))}
+                    step={64}
+                    type="number"
+                    value={maxTokens}
+                  />
+                </label>
+                <label className="space-y-1 font-sans text-xs text-on-dark-soft">
+                  <span>Temperature</span>
+                  <input
+                    className="w-full rounded-md border border-surface-dark-elevated bg-surface-dark px-2 py-1.5 text-on-dark outline-none"
+                    disabled={summarizing}
+                    max={1}
+                    min={0}
+                    onChange={(event) =>
+                      setTemperature(Number(event.target.value))
+                    }
+                    step={0.1}
+                    type="number"
+                    value={temperature}
+                  />
+                </label>
+                <label className="space-y-1 font-sans text-xs text-on-dark-soft">
+                  <span>Top comments</span>
+                  <input
+                    className="w-full rounded-md border border-surface-dark-elevated bg-surface-dark px-2 py-1.5 text-on-dark outline-none"
+                    disabled={summarizing}
+                    max={30}
+                    min={3}
+                    onChange={(event) =>
+                      setCommentLimit(Number(event.target.value))
+                    }
+                    step={1}
+                    type="number"
+                    value={commentLimit}
+                  />
+                </label>
+              </div>
+              {loadedModelId && loadedContextWindowSize !== contextWindowSize ? (
+                <p className="mt-3 font-sans text-xs leading-5 text-error-text">
+                  Reload the model to apply the new context size.
+                </p>
+              ) : null}
+            </details>
             <div className="flex flex-wrap gap-3 font-sans text-xs">
               <button
                 className="text-on-dark-soft transition hover:text-on-dark"
@@ -456,7 +554,7 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
                 Reset runtime
               </button>
             </div>
-          </div>
+            </div>
 
           {confirmingCacheDelete ? (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-surface-dark/80 p-4 backdrop-blur-sm">
@@ -492,7 +590,7 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
             </div>
           ) : null}
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            <div className="pt-4">
             {!summary ? (
               <p className="font-sans text-sm leading-5 text-on-dark-soft">{status}</p>
             ) : null}
@@ -528,6 +626,7 @@ export function PostSummarizerFab({ post, comments }: SummarizerProps) {
                 </article>
               </div>
             ) : null}
+            </div>
           </div>
         </section>
       ) : null}

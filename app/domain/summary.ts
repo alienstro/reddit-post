@@ -19,3 +19,10 @@ export type SummarizerProps = {
   post: SummaryPost | null;
   comments: SummaryComment[];
 };
+
+export type SummaryPromptOptions = {
+  commentLimit: number;
+  flattenedCommentLimit: number;
+  postBodyCharLimit: number;
+  commentCharLimit: number;
+};

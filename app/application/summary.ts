@@ -1,12 +1,30 @@
-import type { SummaryComment, SummaryPost } from "@/app/domain/summary";
+import type {
+  SummaryComment,
+  SummaryPost,
+  SummaryPromptOptions,
+} from "@/app/domain/summary";
 import type { ModelOption } from "@/app/domain/webllm";
 
-export function buildPrompt(post: SummaryPost, comments: SummaryComment[]) {
-  const topComments = flattenSummaryComments(comments.slice(0, 20))
-    .slice(0, 60)
+const defaultPromptOptions: SummaryPromptOptions = {
+  commentLimit: 10,
+  flattenedCommentLimit: 30,
+  postBodyCharLimit: 1600,
+  commentCharLimit: 500,
+};
+
+export function buildPrompt(
+  post: SummaryPost,
+  comments: SummaryComment[],
+  options: Partial<SummaryPromptOptions> = {},
+) {
+  const promptOptions = { ...defaultPromptOptions, ...options };
+  const topComments = flattenSummaryComments(
+    comments.slice(0, promptOptions.commentLimit),
+  )
+    .slice(0, promptOptions.flattenedCommentLimit)
     .map((comment, index) => {
       const indent = "  ".repeat(comment.depth);
-      return `${indent}${index + 1}. u/${comment.author ?? "unknown"} (${comment.score} points): ${comment.body}`;
+      return `${indent}${index + 1}. u/${comment.author ?? "unknown"} (${comment.score} points): ${truncateText(comment.body, promptOptions.commentCharLimit)}`;
     })
     .join("\n\n");
 
@@ -22,13 +40,21 @@ export function buildPrompt(post: SummaryPost, comments: SummaryComment[]) {
     post.image_url ? `Image: ${post.image_url}` : "",
     "",
     "Post body:",
-    post.selftext || "(No self text; use title and comments.)",
+    truncateText(post.selftext, promptOptions.postBodyCharLimit) ||
+      "(No self text; use title and comments.)",
     "",
     "Top comments:",
     topComments || "(No comments loaded.)",
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function truncateText(text: string, maxLength: number) {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return `${text.slice(0, maxLength).trim()}...`;
 }
 
 function flattenSummaryComments(
